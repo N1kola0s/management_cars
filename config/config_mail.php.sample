@@ -1,0 +1,9 @@
+<?php
+    //definite costanti con parametri per invio della email;
+    define('EMAIL_HOST', '');
+    define('EMAIL_USERNAME', '');
+    define('EMAIL_PASSWORD', '');
+    define('EMAIL_PORT', '');
+    define('EMAIL_FROM', '');
+    define('URL_SERVER', '');
+?>

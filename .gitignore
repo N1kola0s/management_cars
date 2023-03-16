@@ -1,0 +1,10 @@
+/.vscode
+/db
+/vendor
+/node_modules
+docker-compose.yml
+composer.lock
+package-lock.json
+config/config.php
+config/config_mail.php
+assets/js/env_variables.js

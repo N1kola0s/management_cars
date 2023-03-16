@@ -1,0 +1,13 @@
+{
+    "name": "nicola/management-cars",
+    "require": {
+        "symfony/validator": "^6.0",
+        "phpoffice/phpspreadsheet": "*",
+        "phpmailer/phpmailer": "^6.6"             
+        
+    },
+    "autoload": {
+        "psr-4": {"App\\": "/"}
+    }
+   
+}

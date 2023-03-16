@@ -1,0 +1,16 @@
+version: 0.0
+os: linux
+files:
+ - source: .
+   destination: /var/www/gfl
+file_exists_behavior: OVERWRITE
+permissions:
+  - object: /var/www/gfl
+    pattern: "*"
+    owner: nginx
+    group: nginx
+hooks:
+  ApplicationStart:
+    - location: scripts/start_app.sh
+      timeout: 300
+      runas: root

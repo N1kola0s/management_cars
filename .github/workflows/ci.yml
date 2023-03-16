@@ -1,0 +1,116 @@
+name: GFL FE
+
+on:
+  push:
+    branches: [develop]
+    tags:
+      - "v*"
+
+env:
+  APP_NAME: gfl
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    - name: Setup Env Release
+      run: |
+          echo "DISTRIBUTION_ID=${{secrets.PROD_DISTRIBUTION_ID}}" >> $GITHUB_ENV
+          echo "STAGE=production" >> $GITHUB_ENV
+          echo "BUCKET_APP=${{secrets.PROD_BUCKET_APP}}" >> $GITHUB_ENV
+      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Setup Env Develop
+      run: |
+          echo "DISTRIBUTION_ID=${{secrets.DEV_DISTRIBUTION_ID}}" >> $GITHUB_ENV
+          echo "STAGE=development" >> $GITHUB_ENV
+          echo "BUCKET_APP=${{secrets.DEV_BUCKET_APP}}" >> $GITHUB_ENV
+      if: github.ref == 'refs/heads/develop'
+    - name: Configura credenziali Deployer
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOYER_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOYER_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name: Download environmnent app
+      run: |
+        aws s3 cp s3://${{secrets.BUCKET_ENV}}/${{ env.APP_NAME }}/frontend/${{ env.STAGE }}/env_variables.js ./assets/js/env_variables.js
+    - name: Install npm dependencies
+      run: npm install
+    - name: Publish on S3
+      run: |
+        aws s3 sync views/ s3://${{env.BUCKET_APP}}/views/ --delete
+        aws s3 sync assets/ s3://${{env.BUCKET_APP}}/assets/ --delete
+        aws s3 sync node_modules/ s3://${{env.BUCKET_APP}}/node_modules/ --delete
+    - name: Clear cache
+      run: |
+        echo ${{env.DISTRIBUTION_ID}}
+        aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ${{env.DISTRIBUTION_ID}} --paths '/*'
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: echo "ZIP_NAME=gfl-${GITHUB_REF##*/}.zip" >> $GITHUB_ENV
+    - name: Setup Env Release
+      run: |
+          echo "STAGE=production" >> $GITHUB_ENV
+          echo "BUCKET_DEPLOY=${{secrets.PROD_BUCKET_DEPLOY}}" >> $GITHUB_ENV
+      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Setup Env Develop
+      run: |
+          echo "STAGE=development" >> $GITHUB_ENV
+          echo "BUCKET_DEPLOY=${{secrets.DEV_BUCKET_DEPLOY}}" >> $GITHUB_ENV
+      if: github.ref == 'refs/heads/develop'
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+    - name: Configura credenziali Deployer
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOYER_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOYER_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name: Download environmnent app
+      run: |
+        aws s3 cp s3://${{secrets.BUCKET_ENV}}/${{ env.APP_NAME }}/backend/${{ env.STAGE }}/config.php ./config/config.php
+        aws s3 cp s3://${{secrets.BUCKET_ENV}}/${{ env.APP_NAME }}/backend/${{ env.STAGE }}/config_mail.php ./config/config_mail.php
+    - name: Installazione dipendenze
+      run: composer install
+    - name: Build
+      run: zip -r ${{ env.ZIP_NAME }} . -x assets/* -x node_modules -x routes/* -x views/* -x '.git*'
+    - name: Upload build
+      run: aws s3 cp ${{ env.ZIP_NAME }} s3://${{secrets.BUCKET_DEPLOY}}
+
+  deploy-be:
+    needs: backend
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set ENV
+      run: echo "ZIP_NAME=gfl-${GITHUB_REF##*/}.zip" >> $GITHUB_ENV
+    - name: Set Stage Prod
+      run: |
+          echo "STAGE=p" >> $GITHUB_ENV
+      if: startsWith(github.ref, 'refs/tags/v')
+    - name: Setup Stage Dev
+      run: |
+          echo "STAGE=d" >> $GITHUB_ENV
+      if: github.ref == 'refs/heads/develop'
+    - name: Configura credenziali
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_DEPLOYER_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_DEPLOYER_SECRET_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name: Create CodeDeploy Deployment
+      run: |
+        aws deploy create-deployment \
+          --application-name ${{ env.APP_NAME }} \
+          --deployment-group-name ${{env.APP_NAME}}-${{env.STAGE}}-grp \
+          --deployment-config-name CodeDeployDefault.OneAtATime \
+          --s3-location bucket=${{secrets.BUCKET_DEPLOY}},bundleType=zip,key=${{ env.ZIP_NAME }}

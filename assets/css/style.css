@@ -1,0 +1,120 @@
+/* #region VARIABLE */
+
+*{
+    margin: 0;
+    padding:0;
+    box-sizing: border-box;
+}
+
+:root{
+
+    --bg_primary: #d9DADC;
+    --bg_secondary: #ffffff;
+    --bg_footer: black;
+    --txt_secondary: white;
+}
+
+/* #endregion */
+
+/* #region COMMON */
+
+body{
+    height:100vh;
+}
+
+header,
+footer{
+    height:6vh;
+}
+
+
+
+main{
+    height: 88vh;
+    background-color: var(--bg_secondary);
+    overflow-y: auto;
+}
+
+a,
+.nav-link{
+    font-size: 16px;
+    text-decoration: none !important;
+    font-weight: bold !important;
+    color: rgb(0, 98, 255) !important;
+    cursor:pointer;
+}
+
+
+.navbar{
+    font-size:1.2rem;
+    box-shadow: 0 2px 4px 0 rgb(0 0 0/ 15%);
+}
+
+.credits{
+    margin:0;
+    height:100%;
+    background-color: var(--bg_footer);
+    color:var(--txt_secondary);
+    font-size:13px;
+}
+
+/* #endregion */
+
+/***********
+   VIEWS
+************/
+
+/* #region Home */
+
+#insertBtn{
+    box-shadow: 0 2px 4px 0 rgb(0 0 0/ 50%);
+
+}
+
+.datepicker-months, .datepicker-years { 
+    color:rgb(0, 98, 255);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* #endregion */
+
+
+/* #region Admin */
+
+#table_container th, #table_container td{
+    border: 1px solid black !important;
+    height:60px;
+    vertical-align: center;
+    padding: 0 20px;
+    font-size: 13px;
+}
+
+/* #endregion */
+
+
+/* #region Validation page */
+
+.confirmation_response{
+    height: 100vh;
+}
+
+.confirm_data_message {
+    font-size: 22px;
+  }
+
+.icon_confirm{
+    color: rgb(57, 223, 57);
+    font-size: 100px;
+    padding: 50px 0 36px;
+
+}
+
+.icon_not_confirm{
+    color: rgb(255, 57, 57);
+    font-size: 100px;
+    padding: 50px 0 36px;
+
+}
+
+/* #endregion */

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+    server_service: 
+        build:
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+            - .:/app
+        ports:
+            - PORTA:80
+        depends_on:
+            - db_service
+
+    db_service: 
+        image: mysql:8.0
+        environment:
+            MYSQL_DATABASE: db_management
+            MYSQL_USER: NOME_UTENTE
+            MYSQL_PASSWORD: PASSWORD
+            MYSQL_ROOT_PASSWORD: PASSWORD_ROOT
+        command:  mysqld --sql_mode=""
+        volumes:
+            - ./db:/var/lib/mysql
+        ports:
+            - PORTA:3306
